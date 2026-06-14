@@ -1,0 +1,49 @@
+= Standalone PlantUML preview support (IntelliJ "PlantUML integration" plugin)
+
+The `.puml` files under `docs/modules/ROOT/examples` reference each other with Antora resource ids,
+e.g.:
+
+----
+!include example$layout/colors.puml
+!includesub example$roles.puml!Core
+----
+
+Antora + Kroki resolve `example$...` (that is how the site and the AsciiDoc preview render them).
+Raw PlantUML does not understand `example$...`, so opening a `.puml` directly with the JetBrains
+*PlantUML integration* plugin fails with `cannot include example$layout/...`.
+
+This directory bridges that gap. It contains one alias per top-level `example$` segment that the
+diagrams include:
+
+----
+example$layout     -> ../docs/modules/ROOT/examples/layout
+example$roles.puml -> ../docs/modules/ROOT/examples/roles.puml
+----
+
+Add this directory to PlantUML's include search path and `!include example$layout/...` resolves to
+`example$layout/...` here, i.e. the real `examples/layout/...` files. It lives outside `docs/` on
+purpose, so Antora never sees it. (Add one more alias here if you add a diagram that includes a new
+top-level `example$` segment.)
+
+== One-time IDE setting — use a RELATIVE path
+
+IntelliJ ▸ Settings ▸ Tools ▸ *PlantUML integration* ▸ *Included paths* → add the entry **relative**:
+
+----
+.plantuml
+----
+
+The plugin's *Included paths* setting is global to the IDE, but it resolves a **relative** entry
+against the **project root**. So this one `.plantuml` entry works for *every* project that follows
+this convention — open project A or project B and each resolves its own `<project>/.plantuml`
+aliases, with no collisions. (Verified: a relative `.plantuml` resolves; a bogus `.plantumlx` does
+not.)
+
+An *absolute* path (e.g. `/Volumes/Git/antora-kroki-example/.plantuml`) also works, but it is
+specific to one checkout and several such entries from different projects accumulate in the one
+global list — which is exactly what the relative entry avoids.
+
+Then open any `.puml` under `examples/` — the standalone preview renders again, including
+`!include`/`!includesub`.
+
+NOTE: the aliases are symlinks. On Windows, enable `git config core.symlinks true` before checkout.

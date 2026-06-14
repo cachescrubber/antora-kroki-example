@@ -50,6 +50,18 @@ is the reference rendering the IDE preview should match.
 > Diagram rendering needs network access to `https://kroki.io` (or change `kroki-server-url` in
 > `antora-playbook.yml` to a local Kroki server).
 
+### C. Standalone `.puml` preview (JetBrains PlantUML integration plugin)
+
+The AsciiDoc preview above resolves `example$…` itself. To open a `.puml` file *directly* with the
+separate **PlantUML integration** plugin, raw PlantUML can't resolve `example$…`. The
+[`.plantuml/`](.plantuml/README.adoc) directory bridges that gap with alias symlinks.
+
+Its **Included paths** setting is global to the IDE — but it resolves a **relative** entry against
+the **project root**. So add `.plantuml` (relative, *not* an absolute path) under
+**Settings ▸ Tools ▸ PlantUML integration ▸ Included paths**, once: the same entry then works for
+every project that ships a root `.plantuml/`, with no cross-project collisions. See
+[`.plantuml/README.adoc`](.plantuml/README.adoc) for details.
+
 ## Layout
 
 ```
@@ -64,4 +76,7 @@ docs/
         ├── roles.puml          !startsub Core/Roles library
         ├── roles-simple.puml   !includesub example$roles.puml!Core
         └── context.puml        !include <C4/C4_Context> pass-through
+.plantuml/                       aliases for standalone .puml preview (outside docs/, ignored by Antora)
+├── example$layout       -> docs/modules/ROOT/examples/layout
+└── example$roles.puml   -> docs/modules/ROOT/examples/roles.puml
 ```
