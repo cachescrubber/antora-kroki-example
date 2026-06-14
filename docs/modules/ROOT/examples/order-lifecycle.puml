@@ -1,0 +1,12 @@
+@startuml
+' Reuses the same shared layout — same example$ include, different diagram.
+!include example$layout/colors.puml
+
+[*] --> Created
+Created --> Confirmed
+Confirmed --> Shipped
+Shipped --> Delivered
+Delivered --> [*]
+Confirmed --> Cancelled
+Cancelled --> [*]
+@enduml

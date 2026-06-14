@@ -1,0 +1,22 @@
+@startuml
+' Shared layout, included by every diagram via  !include example$layout/colors.puml
+' The Kroki server has no filesystem, so the IntelliJ plugin (and the asciidoctor-kroki
+' JS extension) must inline this content before sending the diagram. This is the body
+' that gets inlined.
+
+hide circle
+hide methods
+
+skinparam class {
+  BackgroundColor #F7FBFF
+  BorderColor     #2E6DA4
+  ArrowColor      #2E6DA4
+  FontColor       #1A1A1A
+}
+skinparam state {
+  BackgroundColor #F7FBFF
+  BorderColor     #2E6DA4
+}
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+@enduml

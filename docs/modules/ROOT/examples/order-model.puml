@@ -1,0 +1,23 @@
+@startuml
+' Headline case: a model that pulls in the shared layout via Antora resource ids.
+' Both includes are resolved + inlined by the feature before the diagram reaches Kroki.
+!include example$layout/colors.puml
+
+class Order {
+  id: String
+  state: OrderState
+  placedAt: DateTime
+}
+class OrderItem {
+  quantity: int
+  product: String
+}
+class Customer {
+  name: String
+}
+
+Customer "1" -- "*" Order
+Order "1" *-- "*" OrderItem
+
+!include example$layout/legend.puml
+@enduml

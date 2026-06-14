@@ -1,0 +1,14 @@
+{
+  "name": "antora-kroki-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Antora demo for resolving Antora example$ resource ids in Kroki PlantUML macros and includes (asciidoctor-intellij-plugin #516)",
+  "scripts": {
+    "build": "antora --fetch antora-playbook.yml"
+  },
+  "devDependencies": {
+    "@antora/cli": "3.1.x",
+    "@antora/site-generator": "3.1.x",
+    "asciidoctor-kroki": "0.18.x"
+  }
+}

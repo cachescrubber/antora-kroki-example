@@ -1,0 +1,52 @@
+= Kroki `example$` demo
+
+This page demonstrates the IntelliJ AsciiDoc plugin feature from
+https://github.com/asciidoctor/asciidoctor-intellij-plugin/issues/516[issue #516]: resolving
+Antora resource ids (`example$…`) in the Kroki extension — both as a `plantuml::` block-macro
+target and inside PlantUML `!include` / `!includesub` directives.
+
+Every diagram below also builds with the official `asciidoctor-kroki` JS extension
+(`npm run build`), so the static site is the reference rendering the IDE preview should match.
+
+== Block macro + shared-layout include
+
+The `.puml` is referenced by an `example$` block-macro target, and itself `!include`s a shared
+layout (`example$layout/colors.puml` + `example$layout/legend.puml`). Both includes are inlined
+before the diagram is sent to Kroki.
+
+plantuml::example$order-model.puml[align=center]
+
+== Reusing the shared layout
+
+A second diagram pulls in the same `example$layout/colors.puml`.
+
+plantuml::example$order-lifecycle.puml[align=center]
+
+== `[plantuml]` delimited block
+
+The same include resolution works for the delimited block form, not just the block macro:
+
+[plantuml]
+----
+@startuml
+!include example$layout/colors.puml
+class InlineBlock
+class SharedLayout
+InlineBlock --> SharedLayout : "!include example$layout/colors.puml"
+@enduml
+----
+
+== `!includesub` — a named sub-block
+
+`roles-simple.puml` extracts just the `Core` section of `roles.puml` via
+`!includesub example$roles.puml!Core`; that section in turn includes the shared layout
+(nested includes are inlined recursively).
+
+plantuml::example$roles-simple.puml[align=center]
+
+== Pass-through: `<stdlib>` includes stay untouched
+
+A `!include <C4/C4_Context>` is not an Antora resource id, so it is left as-is and resolved by
+the Kroki server. Remote `http(s)` includes are passed through the same way.
+
+plantuml::example$context.puml[align=center]

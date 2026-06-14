@@ -1,0 +1,6 @@
+name: kroki-antora-example
+title: Kroki example$ demo
+version: ~
+start_page: index.adoc
+nav:
+  - modules/ROOT/nav.adoc
