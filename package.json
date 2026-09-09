@@ -7,8 +7,9 @@
     "build": "antora --fetch antora-playbook.yml"
   },
   "devDependencies": {
-    "@antora/cli": "3.1.x",
-    "@antora/site-generator": "3.1.x",
+    "@antora/cli": "3.2.x",
+    "@antora/pdf-extension": "1.0.x",
+    "@antora/site-generator": "3.2.x",
     "asciidoctor-kroki": "0.18.x"
   }
 }
