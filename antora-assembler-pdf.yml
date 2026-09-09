@@ -1,0 +1,2 @@
+build:
+  command: asciidoctor-pdf -r asciidoctor-kroki --sourcemap

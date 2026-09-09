@@ -2,6 +2,10 @@ site:
   title: Kroki example$ demo
   start_page: kroki-antora-example::index.adoc
 
+antora:
+  extensions:
+    - '@antora/pdf-extension'
+
 content:
   sources:
     - url: .

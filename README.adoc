@@ -10,6 +10,10 @@ https://github.com/asciidoctor/asciidoctor-intellij-plugin/issues/516[asciidocto
 *resolved and inlined* before the diagram is sent — that is exactly what the plugin now does in the
 IDE preview, mirroring the official `asciidoctor-kroki` JavaScript extension.
 
+The same problem is present when using `@antora/pdf-extension` to render PDFs with `asciidoctor-pdf`,
+and is currently unresolved there — see the note in
+<<b-build-the-reference-site-node-antora,section B>>.
+
 == What it covers
 
 `docs/modules/ROOT/pages/index.adoc` exercises, in order:
@@ -35,7 +39,12 @@ IDE preview, mirroring the official `asciidoctor-kroki` JavaScript extension.
 . The preview renders all five diagrams; the shared `colors`/`legend` layout proves the `example$`
   includes were inlined.
 
+[[b-build-the-reference-site-node-antora]]
 === B. Build the reference site (Node / Antora)
+
+For the PDF export step you also need Ruby installed, with the `asciidoctor-pdf` and
+`asciidoctor-kroki` gems on `PATH` (`gem install asciidoctor-pdf asciidoctor-kroki`). The HTML site
+itself only needs Node.
 
 [source,sh]
 ----
@@ -44,7 +53,8 @@ npm run build
 ----
 
 Open `build/site/index.html`. This builds with the official `asciidoctor-kroki` JS extension, so it
-is the reference rendering the IDE preview should match.
+is the reference rendering the IDE preview should match. The PDF export lands at
+`build/site/kroki-antora-example/_exports/index.pdf`.
 
 [NOTE]
 ====
@@ -53,6 +63,12 @@ rather than cloning it, run `git init && git add -A && git commit -m init` first
 
 Diagram rendering needs network access to `https://kroki.io` (or change `kroki-server-url` in
 `antora-playbook.yml` to a local Kroki server).
+
+The PDF export does not resolve `example$…` ids: `antora-assembler-pdf.yml` runs plain
+`asciidoctor-pdf -r asciidoctor-kroki`, and that Ruby gem has no notion of Antora resource ids and
+does not preprocess PlantUML `!include`/`!includesub` at all. As a result, every diagram in this demo
+that relies on `example$…` renders as literal, unresolved text in the PDF — this is a known
+limitation of the PDF path, not a bug in the HTML build.
 ====
 
 === C. Standalone `.puml` preview (JetBrains PlantUML integration plugin)
