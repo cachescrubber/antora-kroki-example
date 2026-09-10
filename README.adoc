@@ -1,50 +1,68 @@
 = Antora `example$` Kroki demo
 
-A small, self-contained Antora project that demonstrates resolving *Antora resource ids
-(`example$…`)* in the Kroki PlantUML extension — both as a `+plantuml::+` block-macro target and
-inside PlantUML `!include` / `!includesub` directives.
+A small, self-contained Antora project that demonstrates one authoring contract for PlantUML diagrams
+that works for the *HTML site*, the *PDF export* and *standalone PlantUML tooling* from the same
+sources:
 
-It accompanies the IntelliJ AsciiDoc plugin change for
-https://github.com/asciidoctor/asciidoctor-intellij-plugin/issues/516[asciidoctor-intellij-plugin#516]
-(refs #489). The Kroki server has no filesystem access, so every `example$…` include must be
-*resolved and inlined* before the diagram is sent — that is exactly what the plugin now does in the
-IDE preview, mirroring the official `asciidoctor-kroki` JavaScript extension.
+* *Pages* reference a diagram source by Antora resource id: `+plantuml::example$order-model.puml[]+`.
+  The id stays in AsciiDoc, where every consumer has the content catalog.
+* *Diagram sources* (`.puml`) include each other with plain relative PlantUML includes:
+  `!include layout/colors.puml`, `!includesub roles.puml!Core`, resolved against the including file
+  as the PlantUML CLI and the JetBrains PlantUML plugin do. No Antora syntax inside PlantUML, so every
+  `.puml` is a valid standalone diagram.
+* `[plantuml]` blocks written directly in a page are for self-contained snippets. Diagrams with
+  includes live in `.puml` files and are referenced by macro.
 
-The same problem is present when using `@antora/pdf-extension` to render PDFs with `asciidoctor-pdf`,
-and is currently unresolved there — see the note in
-<<b-build-the-reference-site-node-antora,section B>>.
+It accompanies https://github.com/asciidoctor/asciidoctor-intellij-plugin/issues/516[asciidoctor-intellij-plugin#516]
+(IDE preview of such diagrams) and https://github.com/asciidoctor/asciidoctor-kroki/issues/519[asciidoctor-kroki#519]
+(Antora resource ids and the Ruby gem).
 
 == What it covers
 
 `docs/modules/ROOT/pages/index.adoc` exercises, in order:
 
 . *Block macro + shared-layout include* — `+plantuml::example$order-model.puml[]+`, whose `.puml`
-  does `!include example$layout/colors.puml` and `!include example$layout/legend.puml`.
+  does `!include layout/colors.puml` and `!include layout/legend.puml`.
 . *Reusing the shared layout* in a second diagram (`order-lifecycle.puml`).
-. *`[plantuml]` delimited block* form with `!include example$layout/colors.puml`.
-. *`!includesub`* with a named sub-block — `!includesub example$roles.puml!Core` (the section
-  itself includes the shared layout, so nested includes are inlined recursively).
-. *Pass-through* — `!include <C4/C4_Context>` is _not_ an Antora id, so it is left untouched and
+. *`[plantuml]` delimited block* — a self-contained snippet without includes (the block rule).
+. *`!includesub`* with a named sub-block — `!includesub roles.puml!Core`; the section itself includes
+  the shared layout, so nested includes are resolved recursively.
+. *Pass-through* — `!include <C4/C4_Context>` cannot be resolved locally, so it is left untouched and
   resolved by the Kroki server. Remote `http(s)` includes are passed through the same way.
 
-== Two ways to use it
+== Who resolves what
 
-=== A. Live preview in IntelliJ (the feature)
+The Kroki server has no filesystem, so whoever sends a diagram must inline its includes first.
 
-. Install the patched plugin build (`asciidoctor-intellij-plugin`, branch
-  `feature/kroki-antora-resource-ids`).
-. Open this folder in IntelliJ and open `docs/modules/ROOT/pages/index.adoc`.
-. In *Settings ▸ Languages & Frameworks ▸ AsciiDoc*, enable the *Kroki* diagram renderer and set a
-  server URL — either the public `https://kroki.io` or a local Kroki, e.g. `http://localhost:8000`.
-. The preview renders all five diagrams; the shared `colors`/`legend` layout proves the `example$`
-  includes were inlined.
+[cols="2,1,3"]
+|===
+| Consumer | Works | How
 
-[[b-build-the-reference-site-node-antora]]
-=== B. Build the reference site (Node / Antora)
+| Antora HTML site (`asciidoctor-kroki` JS 0.18.x)
+| yes
+| Resolves the macro target through the content catalog and joins the relative `!include`s against
+  it (`antora-adapter.js` + `preprocess.js`). Nothing to add.
 
-For the PDF export step you also need Ruby installed, with the `asciidoctor-pdf` and
-`asciidoctor-kroki` gems on `PATH` (`gem install asciidoctor-pdf asciidoctor-kroki`). The HTML site
-itself only needs Node.
+| Antora PDF export (Assembler → `asciidoctor-pdf -r asciidoctor-kroki`)
+| yes, with `extensions/antora-assembler-kroki.js`
+| The Ruby gem cannot see the catalog, so the extension exports the diagram sources to disk and points
+  the macros at them; the gem's include preprocessor (2.0+) does the rest. See <<pdf-export>>.
+
+| JetBrains PlantUML integration plugin, PlantUML CLI
+| yes
+| Plain relative includes; nothing Antora-specific in the `.puml` files.
+
+| IntelliJ AsciiDoc plugin preview (Kroki renderer)
+| not yet
+| PR asciidoctor-intellij-plugin#2054 resolves the macro target, but the plugin's Ruby copy of the
+  kroki extension predates the include preprocessor, so the relative `!include`s reach Kroki
+  unresolved. Planned: sync the plugin to the gem's 2.0 preprocessor, plus a placeholder mode for
+  diagrams that cannot be rendered.
+|===
+
+== Build
+
+=== HTML site (Node only)
 
 [source,sh]
 ----
@@ -52,8 +70,19 @@ npm install
 npm run build
 ----
 
-Open `build/site/index.html`. This builds with the official `asciidoctor-kroki` JS extension, so it
-is the reference rendering the IDE preview should match. The PDF export lands at
+Open `build/site/index.html`. The PDF step of this command also runs if Ruby with `asciidoctor-pdf`
+and the `asciidoctor-kroki` gem (2.0+) is on `PATH`; without Ruby, Antora logs the failed converter
+and the site still builds.
+
+=== HTML site + PDF (Docker, reproducible)
+
+[source,sh]
+----
+npm run build:docker
+----
+
+Builds the image from the `Dockerfile` (Antora 3.2, `asciidoctor-kroki` 0.18.1, `@antora/pdf-extension`,
+`asciidoctor-pdf`, `asciidoctor-kroki` gem 2.0.0.rc.3) and runs the playbook in it. The PDF lands at
 `build/site/kroki-antora-example/_exports/index.pdf`.
 
 [NOTE]
@@ -63,24 +92,45 @@ rather than cloning it, run `git init && git add -A && git commit -m init` first
 
 Diagram rendering needs network access to `https://kroki.io` (or change `kroki-server-url` in
 `antora-playbook.yml` to a local Kroki server).
-
-The PDF export does not resolve `example$…` ids: `antora-assembler-pdf.yml` runs plain
-`asciidoctor-pdf -r asciidoctor-kroki`, and that Ruby gem has no notion of Antora resource ids and
-does not preprocess PlantUML `!include`/`!includesub` at all. As a result, every diagram in this demo
-that relies on `example$…` renders as literal, unresolved text in the PDF — this is a known
-limitation of the PDF path, not a bug in the HTML build.
 ====
 
-=== C. Standalone `.puml` preview (JetBrains PlantUML integration plugin)
+[[pdf-export]]
+== PDF export and `example$` ids
 
-The AsciiDoc preview above resolves `example$…` itself. To open a `.puml` file _directly_ with the
-separate *PlantUML integration* plugin, raw PlantUML can't resolve `example$…`. The
-link:.plantuml/README.adoc[`.plantuml/`] directory bridges that gap with alias symlinks.
+`antora-assembler-pdf.yml` runs plain `asciidoctor-pdf -r asciidoctor-kroki`. Antora Assembler expands
+`include::` directives and rewrites xrefs and images, then pipes the merged AsciiDoc to that Ruby
+process, which knows nothing about Antora resource ids: `+plantuml::example$order-model.puml[]+` is not
+a path to it.
 
-Its *Included paths* setting is global to the IDE and takes the *absolute* path of this
-directory (`<checkout>/.plantuml`) under *Settings ▸ Tools ▸ PlantUML integration ▸ Included paths*.
-A relative entry does not resolve against the project root. See
-link:.plantuml/README.adoc[.plantuml/README.adoc] for details.
+`extensions/antora-assembler-kroki.js` (registered under `antora.extensions` in the playbook) closes
+that gap on the Node side, where the content catalog is. It wraps the Assembler's page loading and,
+only for Assembler exports, rewrites each page before it is merged. Two modes:
+
+`export` (default)::
+Writes the referenced resource family — the module's `examples/` tree with its layout intact — to
+`build/assembler/resources/<component>/<version>/<module>/<family>/` and points the macro at the
+exported file. `asciidoctor-kroki` 2.0+ then resolves the relative `!include`s from that file's
+directory itself; nothing Antora-specific reaches Ruby. This mirrors what the Assembler already does
+for `image$` targets and is the behavior we would like the Assembler to grow natively, at which point
+the extension retires.
+
+`inline`::
+For converters with `asciidoctor-kroki` < 2.0 (no include preprocessor): resolves and inlines every
+include here, turning the macro into a `[plantuml]` literal block holding the self-contained diagram.
+Reuses the JS extension's own `preprocess.js` and `antora-adapter.js`, so the result matches the site.
+
+[source,yaml]
+----
+antora:
+  extensions:
+    - '@antora/pdf-extension'
+    - require: ./extensions/antora-assembler-kroki.js
+      mode: export                              # or inline
+      export_dir: build/assembler/resources     # default, relative to the playbook dir
+      macros: [plantuml, c4plantuml]            # default
+----
+
+Tests: `npm test` (`node --test`, no extra dependencies).
 
 == Layout
 
@@ -88,16 +138,18 @@ link:.plantuml/README.adoc[.plantuml/README.adoc] for details.
 ----
 docs/
 └── modules/ROOT/
-    ├── pages/index.adoc        the demo page
+    ├── pages/index.adoc        the demo page (macros only)
     └── examples/
-        ├── layout/colors.puml  shared skin, included via example$layout/colors.puml
+        ├── layout/colors.puml  shared skin, included via  !include layout/colors.puml
         ├── layout/legend.puml  shared legend
         ├── order-model.puml    class model + shared-layout includes
         ├── order-lifecycle.puml
         ├── roles.puml          !startsub Core/Roles library
-        ├── roles-simple.puml   !includesub example$roles.puml!Core
+        ├── roles-simple.puml   !includesub roles.puml!Core
         └── context.puml        !include <C4/C4_Context> pass-through
-.plantuml/                       aliases for standalone .puml preview (outside docs/, ignored by Antora)
-├── example$layout       -> docs/modules/ROOT/examples/layout
-└── example$roles.puml   -> docs/modules/ROOT/examples/roles.puml
+extensions/
+├── antora-assembler-kroki.js   Antora extension: export/inline example$ diagram sources for the PDF export
+└── test/                       node --test suite
+Dockerfile                      Antora + kroki JS + asciidoctor-pdf + kroki gem, for `npm run build:docker`
+antora-assembler-pdf.yml        Assembler config for @antora/pdf-extension
 ----

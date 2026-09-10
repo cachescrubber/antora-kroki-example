@@ -1,7 +1,7 @@
 @startuml
-' Pulls only the "Core" sub-block out of roles.puml. The feature resolves the Antora
-' resource id and extracts the !startsub Core … !endsub section (which itself includes
-' the shared layout — nested includes are inlined recursively).
+' Pulls only the "Core" sub-block out of roles.puml (same directory): the !startsub Core …
+' !endsub section, which itself includes the shared layout — nested includes are inlined
+' recursively.
 title Party — core only
-!includesub example$roles.puml!Core
+!includesub roles.puml!Core
 @enduml

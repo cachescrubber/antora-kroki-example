@@ -4,7 +4,9 @@
   "private": true,
   "description": "Antora demo for resolving Antora example$ resource ids in Kroki PlantUML macros and includes (asciidoctor-intellij-plugin #516)",
   "scripts": {
-    "build": "antora --fetch antora-playbook.yml"
+    "build": "antora --fetch antora-playbook.yml",
+    "build:docker": "docker build -t antora-kroki-example . && docker run --rm -v \"$PWD\":/antora -w /antora antora-kroki-example --fetch antora-playbook.yml",
+    "test": "node --test extensions/test"
   },
   "devDependencies": {
     "@antora/cli": "3.2.x",

@@ -1,9 +1,9 @@
 @startuml
 ' A "library" file split into named sub-blocks with !startsub / !endsub.
-' Other diagrams pull individual sections via  !includesub example$roles.puml!<Name>.
+' Other diagrams pull individual sections via  !includesub roles.puml!<Name>.
 
 !startsub Core
-!include example$layout/colors.puml
+!include layout/colors.puml
 abstract class Party
 class Individual extends Party
 class Organization extends Party

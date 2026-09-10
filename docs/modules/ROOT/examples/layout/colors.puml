@@ -1,8 +1,8 @@
 @startuml
-' Shared layout, included by every diagram via  !include example$layout/colors.puml
-' The Kroki server has no filesystem, so the IntelliJ plugin (and the asciidoctor-kroki
-' JS extension) must inline this content before sending the diagram. This is the body
-' that gets inlined.
+' Shared layout, included by every diagram via a plain relative  !include layout/colors.puml
+' (relative to the including .puml file, standard PlantUML). The Kroki server has no
+' filesystem, so whoever sends the diagram (asciidoctor-kroki JS on the site, the Ruby gem's
+' preprocessor for the PDF, the IDE plugin) inlines this content first.
 
 hide circle
 hide methods

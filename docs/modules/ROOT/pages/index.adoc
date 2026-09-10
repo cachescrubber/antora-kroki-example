@@ -1,52 +1,63 @@
 = Kroki `example$` demo
 
-This page demonstrates the IntelliJ AsciiDoc plugin feature from
-https://github.com/asciidoctor/asciidoctor-intellij-plugin/issues/516[issue #516]: resolving
-Antora resource ids (`example$…`) in the Kroki extension — both as a `plantuml::` block-macro
-target and inside PlantUML `!include` / `!includesub` directives.
+This page demonstrates one authoring contract for PlantUML diagrams in an Antora site that works
+for the HTML build, the PDF export and standalone PlantUML tooling alike:
 
-Every diagram below also builds with the official `asciidoctor-kroki` JS extension
-(`npm run build`), so the static site is the reference rendering the IDE preview should match.
+* *Pages* reference a diagram source by Antora resource id — `+plantuml::example$order-model.puml[]+`.
+  The id lives in AsciiDoc, where every consumer has the content catalog.
+* *Diagram sources* (`.puml`) include each other with plain, relative PlantUML includes —
+  `!include layout/colors.puml`, `!includesub roles.puml!Core` — resolved against the including
+  file, exactly as the PlantUML CLI or the JetBrains PlantUML plugin do. No Antora syntax inside
+  PlantUML, so every `.puml` stays a valid standalone diagram.
+* `[plantuml]` blocks written directly in a page are for self-contained snippets. A relative include
+  inside a page block has no anchor directory in any consumer, so diagrams that include anything
+  live in a `.puml` file and are referenced by macro.
+
+It accompanies https://github.com/asciidoctor/asciidoctor-intellij-plugin/issues/516[asciidoctor-intellij-plugin#516]
+and https://github.com/asciidoctor/asciidoctor-kroki/issues/519[asciidoctor-kroki#519]. Every diagram
+below builds with the official `asciidoctor-kroki` JS extension (`npm run build`) and with
+`asciidoctor-pdf` via Antora Assembler (`npm run build:docker`).
 
 == Block macro + shared-layout include
 
-The `.puml` is referenced by an `example$` block-macro target, and itself `!include`s a shared
-layout (`example$layout/colors.puml` + `example$layout/legend.puml`). Both includes are inlined
-before the diagram is sent to Kroki.
+The `.puml` is referenced by an `example$` block-macro target, and itself does
+`!include layout/colors.puml` and `!include layout/legend.puml` (relative to its own directory).
+The includes are inlined before the diagram is sent to Kroki.
 
 plantuml::example$order-model.puml[align=center]
 
 == Reusing the shared layout
 
-A second diagram pulls in the same `example$layout/colors.puml`.
+A second diagram pulls in the same `layout/colors.puml`.
 
 plantuml::example$order-lifecycle.puml[align=center]
 
-== `[plantuml]` delimited block
+== `[plantuml]` delimited block: self-contained only
 
-The same include resolution works for the delimited block form, not just the block macro:
+A block written directly in the page carries no includes. It renders everywhere without any
+resolution step, which is the point of the rule above.
 
 [plantuml]
 ----
 @startuml
-!include example$layout/colors.puml
+hide circle
+class Page
 class InlineBlock
-class SharedLayout
-InlineBlock --> SharedLayout : "!include example$layout/colors.puml"
+Page --> InlineBlock : "self-contained"
 @enduml
 ----
 
 == `!includesub` — a named sub-block
 
-`roles-simple.puml` extracts just the `Core` section of `roles.puml` via
-`!includesub example$roles.puml!Core`; that section in turn includes the shared layout
-(nested includes are inlined recursively).
+`roles-simple.puml` extracts just the `Core` section of `roles.puml` (same directory) via
+`!includesub roles.puml!Core`; that section in turn includes the shared layout, so nested includes
+are inlined recursively.
 
 plantuml::example$roles-simple.puml[align=center]
 
 == Pass-through: `<stdlib>` includes stay untouched
 
-A `!include <C4/C4_Context>` is not an Antora resource id, so it is left as-is and resolved by
-the Kroki server. Remote `http(s)` includes are passed through the same way.
+A `!include <C4/C4_Context>` cannot be resolved locally, so it is left as-is and resolved by the
+Kroki server. Remote `http(s)` includes are passed through the same way.
 
 plantuml::example$context.puml[align=center]
