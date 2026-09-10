@@ -139,9 +139,6 @@ function rewritePage (doc, file, contentCatalog, opts, logger) {
 module.exports.register = function register ({ config = {}, playbook }) {
   const logger = this.getLogger('antora-assembler-kroki')
   const playbookDir = (playbook && playbook.dir) || process.cwd()
-  if (config.mode && config.mode !== 'export') {
-    logger.warn(`ignoring mode '${config.mode}': this extension only exports (the earlier inline mode was removed)`)
-  }
   const macros = Array.isArray(config.macros) && config.macros.length ? config.macros : DEFAULT_MACROS
   const macroRx = new RegExp(`^(${macros.map(escapeRegExp).join('|')})::(\\S+?)\\[(.*)\\]\\s*$`)
   const exportDir = path.resolve(playbookDir, config.export_dir || DEFAULT_EXPORT_DIR)

@@ -223,11 +223,3 @@ test('leaves non-resource targets alone and warns on an unknown example$ id', ()
   assert.equal(warnings.length, 1)
   assert.match(warnings[0][1], /example\$missing\.puml/)
 })
-
-test('ignores a stale mode option from the proof of concept with a warning', () => {
-  const { ctx, state, warnings } = createContext()
-  extension.register.call(ctx, { config: { mode: 'inline' }, playbook: { dir: process.cwd() } })
-  assert.equal(typeof state.replaced.loadAsciiDoc, 'function')
-  assert.equal(warnings.length, 1)
-  assert.match(warnings[0][0], /only exports/)
-})
