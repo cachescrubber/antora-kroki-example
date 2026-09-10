@@ -90,6 +90,11 @@ function tmpDir () {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'antora-assembler-kroki-'))
 }
 
+test('declares one parameter so Antora passes the playbook config (register.length must be 1)', () => {
+  // Antora only passes { config, playbook } when register.length > 0; a defaulted parameter has length 0
+  assert.equal(extension.register.length, 1)
+})
+
 test('registers a loadAsciiDoc replacement', () => {
   const { ctx, state } = createContext()
   extension.register.call(ctx, { config: {}, playbook: { dir: process.cwd() } })

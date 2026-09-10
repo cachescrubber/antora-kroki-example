@@ -202,7 +202,11 @@ function rewriteInline (lines, file, contentCatalog, doc, opts, logger) {
 
 // --- registration ------------------------------------------------------------------------------------
 
-module.exports.register = function register ({ config = {}, playbook } = {}) {
+// NOTE: keep exactly one declared parameter without a default value. Antora decides by `register.length`
+// whether to pass `{ config, playbook, ... }` at all; a parameter with a default value does not count, so
+// `({ config = {} } = {})` would make Antora call register() with no arguments and every option fall back
+// to its default.
+module.exports.register = function register ({ config = {}, playbook }) {
   const logger = this.getLogger('antora-assembler-kroki')
   const playbookDir = (playbook && playbook.dir) || process.cwd()
   const mode = config.mode || 'export'
