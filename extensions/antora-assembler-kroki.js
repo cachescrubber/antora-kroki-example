@@ -141,7 +141,8 @@ module.exports.register = function register ({ config = {}, playbook }) {
   const playbookDir = (playbook && playbook.dir) || process.cwd()
   const macros = Array.isArray(config.macros) && config.macros.length ? config.macros : DEFAULT_MACROS
   const macroRx = new RegExp(`^(${macros.map(escapeRegExp).join('|')})::(\\S+?)\\[(.*)\\]\\s*$`)
-  const exportDir = path.resolve(playbookDir, config.export_dir || DEFAULT_EXPORT_DIR)
+  // Antora camelCases the playbook keys: `export_dir` in the playbook arrives as `exportDir`
+  const exportDir = path.resolve(playbookDir, config.exportDir || DEFAULT_EXPORT_DIR)
   const opts = { macroRx, exportDir, exported: new Set() }
   // Chain to a replacement an earlier extension registered; Antora binds the built-in function only after all
   // extensions registered, so it is absent here and has to be required.
