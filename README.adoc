@@ -94,6 +94,19 @@ Diagram rendering needs network access to `https://kroki.io` (or change `kroki-s
 `antora-playbook.yml` to a local Kroki server).
 ====
 
+== IDE demo for the plugin's Kroki 2.0 sync
+
+`ide-demo/plain-includes.adoc` lives outside `docs/`, so Antora ignores it. Its `plantuml::` macros use
+plain document-relative paths (`../docs/modules/ROOT/examples/order-model.puml`), no resource ids, so
+it demonstrates one thing in isolation: the IntelliJ AsciiDoc plugin built from the branch
+`feature/sync-kroki-extension-2.0` (embedded `asciidoctor-kroki` 2.0) inlines the relative
+`!include`/`!includesub` directives before sending the diagram to Kroki.
+
+Open the page with the release plugin first: the diagrams render, but without the shared layout,
+because the Kroki server silently drops the includes it cannot read. Then switch to the sync build:
+same page, layout applied. Case 4 shows the inline-block variant via `kroki-plantuml-include-paths`
+set from `{docdir}`.
+
 [[pdf-export]]
 == PDF export and `example$` ids
 
@@ -147,6 +160,8 @@ docs/
         ├── roles.puml          !startsub Core/Roles library
         ├── roles-simple.puml   !includesub roles.puml!Core
         └── context.puml        !include <C4/C4_Context> pass-through
+ide-demo/
+└── plain-includes.adoc         IDE-only page (outside docs/): relative includes, no resource ids
 extensions/
 ├── antora-assembler-kroki.js   Antora extension: export/inline example$ diagram sources for the PDF export
 └── test/                       node --test suite
