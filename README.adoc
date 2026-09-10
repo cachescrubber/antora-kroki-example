@@ -77,10 +77,9 @@ The AsciiDoc preview above resolves `example$…` itself. To open a `.puml` file
 separate *PlantUML integration* plugin, raw PlantUML can't resolve `example$…`. The
 link:.plantuml/README.adoc[`.plantuml/`] directory bridges that gap with alias symlinks.
 
-Its *Included paths* setting is global to the IDE — but it resolves a _relative_ entry against the
-*project root*. So add `.plantuml` (relative, _not_ an absolute path) under
-*Settings ▸ Tools ▸ PlantUML integration ▸ Included paths*, once: the same entry then works for
-every project that ships a root `.plantuml/`, with no cross-project collisions. See
+Its *Included paths* setting is global to the IDE and takes the *absolute* path of this
+directory (`<checkout>/.plantuml`) under *Settings ▸ Tools ▸ PlantUML integration ▸ Included paths*.
+A relative entry does not resolve against the project root. See
 link:.plantuml/README.adoc[.plantuml/README.adoc] for details.
 
 == Layout
