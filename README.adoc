@@ -82,6 +82,10 @@ npm run build
 Open `build/site/index.html`. The PDF step of this command also runs if Ruby with `asciidoctor-pdf`
 and the `asciidoctor-kroki` gem (2.0+) is on `PATH`; without Ruby, Antora logs the failed converter
 and the site still builds.
+The gem 2.0 line exists only as prereleases so far: `gem install asciidoctor-kroki --pre` (without `--pre`
+you get 1.x, which sends the `!include` lines to the Kroki server unresolved, and the diagrams silently
+lose their includes). The exported macro targets are absolute paths, so the converter must run in unsafe
+mode (the `asciidoctor-pdf` CLI default) or `export_dir` must lie inside the Assembler's `build.cwd`.
 
 === HTML site + PDF (Docker, reproducible)
 
@@ -149,7 +153,7 @@ a path to it.
 that gap on the Node side, where the content catalog is. It wraps the Assembler's page loading and,
 only for Assembler exports, rewrites each page before it is merged: it writes the referenced resource
 family — the module's `examples/` tree with its layout intact — to
-`build/assembler/resources/<component>/<version>/<module>/<family>/` and points each macro at the
+`build/assembler-resources/<component>/<version>/<module>/<family>/` and points each macro at the
 exported file. `asciidoctor-kroki` 2.0+ then resolves the relative `!include`s from that file's directory
 itself; nothing Antora-specific reaches Ruby. This mirrors what the Assembler already does for `image$`
 targets and is the behavior we would like the Assembler to grow natively, at which point the extension
@@ -162,7 +166,7 @@ antora:
   extensions:
     - '@antora/pdf-extension'
     - require: ./extensions/antora-assembler-kroki.js
-      export_dir: build/assembler/resources     # default, relative to the playbook dir
+      export_dir: build/assembler-resources     # default, relative to the playbook dir; keep it outside the Assembler's build.dir (cleaned before conversion)
       macros: [plantuml, c4plantuml]            # default
 ----
 

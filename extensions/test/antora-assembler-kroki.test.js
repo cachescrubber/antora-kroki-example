@@ -56,17 +56,26 @@ function createPage (contents) {
   })
 }
 
+// Stand-in for @antora/asciidoc-loader. The Assembler loads pages with the sourcemap enabled, which the literal
+// block detection relies on.
 function fakeLoadAsciiDoc (file, contentCatalog, config = {}) {
   return asciidoctor.load(file.contents.toString(), { sourcemap: true, safe: 'safe', attributes: Object.assign({}, config.attributes) })
 }
 
-function createContext () {
+// Generator context stand-in. `functions` mimics a loadAsciiDoc replacement registered by an earlier extension.
+function createContext ({ functions = {} } = {}) {
   const warnings = []
-  const state = {}
+  const state = { loads: 0 }
   const ctx = {
     getLogger: () => ({ info () {}, warn: (...args) => warnings.push(args) }),
+    getFunctions: () => Object.assign({}, functions),
     require (name) {
-      if (name === '@antora/asciidoc-loader') return fakeLoadAsciiDoc
+      if (name === '@antora/asciidoc-loader') {
+        return (...args) => {
+          state.loads++
+          return fakeLoadAsciiDoc(...args)
+        }
+      }
       throw new Error(`unexpected require: ${name}`)
     },
     replaceFunctions (fns) {
@@ -76,17 +85,22 @@ function createContext () {
   return { ctx, state, warnings }
 }
 
+// Antora camelCases playbook keys before handing the extension its config: `export_dir` becomes `exportDir`.
 const ASSEMBLER = { attributes: { 'loader-assembler': '' } }
 
 function loadWith (page, { config = {}, asciidocConfig = ASSEMBLER, catalog = createContentCatalog() } = {}) {
   const { ctx, state, warnings } = createContext()
   extension.register.call(ctx, { config, playbook: { dir: config.playbookDir || process.cwd() } })
   const doc = state.replaced.loadAsciiDoc(createPage(page), catalog, asciidocConfig)
-  return { lines: doc.getSourceLines(), warnings }
+  return { lines: doc.getSourceLines(), warnings, loads: state.loads }
 }
 
 function tmpDir () {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'antora-assembler-kroki-'))
+}
+
+function exportedFamilyDir (dir) {
+  return path.join(dir, 'demo', '1.0', 'ROOT', 'example')
 }
 
 test('declares one parameter so Antora passes the playbook config (register.length must be 1)', () => {
@@ -100,51 +114,113 @@ test('registers a loadAsciiDoc replacement', () => {
   assert.equal(typeof state.replaced.loadAsciiDoc, 'function')
 })
 
+test('chains to a loadAsciiDoc replacement registered by an earlier extension', () => {
+  let calls = 0
+  const earlier = (...args) => {
+    calls++
+    return fakeLoadAsciiDoc(...args)
+  }
+  const { ctx, state } = createContext({ functions: { loadAsciiDoc: earlier } })
+  extension.register.call(ctx, { config: { exportDir: tmpDir() }, playbook: { dir: '/' } })
+  const doc = state.replaced.loadAsciiDoc(createPage('= Page\n\nplantuml::example$order-model.puml[]\n'), createContentCatalog(), ASSEMBLER)
+  assert.equal(calls, 1)
+  assert.equal(state.loads, 0, 'the built-in loader must not be used when a replacement exists')
+  assert.ok(doc.getSourceLines().join('\n').includes('/ROOT/example/order-model.puml[]'))
+})
+
 test('leaves the regular (non-Assembler) load untouched', () => {
   const { lines } = loadWith('= Page\n\nplantuml::example$order-model.puml[]\n', { asciidocConfig: { attributes: {} } })
   assert.ok(lines.includes('plantuml::example$order-model.puml[]'))
 })
 
-test('rewrites the macro target to the exported file and writes the family to disk', () => {
+test('rewrites the macro target in place to the exported file and writes the family to disk', () => {
   const dir = tmpDir()
-  const { lines, warnings } = loadWith('= Page\n\nplantuml::example$order-model.puml[align=center]\n', {
-    config: { export_dir: dir, playbookDir: '/' },
+  const { lines, warnings, loads } = loadWith('= Page\n\nplantuml::example$order-model.puml[align=center]\n', {
+    config: { exportDir: dir, playbookDir: '/' },
   })
   assert.deepEqual(warnings, [])
-  const expected = path.join(dir, 'demo', '1.0', 'ROOT', 'example', 'order-model.puml')
+  assert.equal(loads, 1, 'the page is parsed once; the source lines are rewritten in place')
+  const expected = path.join(exportedFamilyDir(dir), 'order-model.puml')
   assert.ok(lines.includes(`plantuml::${expected}[align=center]`), lines.join('\n'))
   // the whole family is exported with its layout, so relative includes resolve on disk
   assert.equal(fs.readFileSync(expected, 'utf8'), EXAMPLES['order-model.puml'])
-  assert.equal(fs.readFileSync(path.join(dir, 'demo', '1.0', 'ROOT', 'example', 'layout', 'colors.puml'), 'utf8'), EXAMPLES['layout/colors.puml'])
-  assert.ok(fs.existsSync(path.join(dir, 'demo', '1.0', 'ROOT', 'example', 'roles.puml')))
+  assert.equal(fs.readFileSync(path.join(exportedFamilyDir(dir), 'layout', 'colors.puml'), 'utf8'), EXAMPLES['layout/colors.puml'])
+  assert.ok(fs.existsSync(path.join(exportedFamilyDir(dir), 'roles.puml')))
   // the macro form is kept: nothing inlined, attrs untouched
   assert.ok(!lines.join('\n').includes('!include'))
 })
 
-test('export_dir defaults to build/assembler/resources under the playbook dir', () => {
+test('replaces the exported family so files gone from the catalog do not linger', () => {
+  const dir = tmpDir()
+  const stale = path.join(exportedFamilyDir(dir), 'layout', 'removed.puml')
+  fs.mkdirSync(path.dirname(stale), { recursive: true })
+  fs.writeFileSync(stale, '@startuml\n@enduml\n')
+  loadWith('= Page\n\nplantuml::example$order-model.puml[]\n', { config: { exportDir: dir, playbookDir: '/' } })
+  assert.equal(fs.existsSync(stale), false)
+  assert.ok(fs.existsSync(path.join(exportedFamilyDir(dir), 'layout', 'colors.puml')))
+})
+
+test('export_dir defaults to build/assembler-resources under the playbook dir', () => {
   const playbookDir = tmpDir()
   const { lines } = loadWith('= Page\n\nplantuml::example$order-model.puml[]\n', {
     config: { playbookDir },
   })
-  const expected = path.join(playbookDir, 'build', 'assembler', 'resources', 'demo', '1.0', 'ROOT', 'example', 'order-model.puml')
+  const expected = path.join(playbookDir, 'build', 'assembler-resources', 'demo', '1.0', 'ROOT', 'example', 'order-model.puml')
   assert.ok(lines.includes(`plantuml::${expected}[]`), lines.join('\n'))
+})
+
+test('leaves macros inside listing, literal, passthrough and comment blocks as literal text', () => {
+  const dir = tmpDir()
+  const page = [
+    '= Page',
+    '',
+    'plantuml::example$order-model.puml[]',
+    '',
+    '[source,asciidoc]',
+    '----',
+    'plantuml::example$order-model.puml[]',
+    'plantuml::example$missing.puml[]',
+    '----',
+    '',
+    '....',
+    'plantuml::example$roles.puml[]',
+    '....',
+    '',
+    '++++',
+    'plantuml::example$roles.puml[]',
+    '++++',
+    '',
+    '////',
+    'plantuml::example$roles.puml[]',
+    '////',
+    '',
+    '[listing]',
+    'plantuml::example$roles.puml[]',
+    '',
+  ].join('\n')
+  const { lines, warnings } = loadWith(page, { config: { exportDir: dir, playbookDir: '/' } })
+  assert.deepEqual(warnings, [], 'a placeholder id inside a listing is not looked up')
+  assert.equal(lines[2], `plantuml::${path.join(exportedFamilyDir(dir), 'order-model.puml')}[]`)
+  assert.deepEqual(lines.filter((line) => line.startsWith('plantuml::example$')), [
+    'plantuml::example$order-model.puml[]',
+    'plantuml::example$missing.puml[]',
+    'plantuml::example$roles.puml[]',
+    'plantuml::example$roles.puml[]',
+    'plantuml::example$roles.puml[]',
+    'plantuml::example$roles.puml[]',
+  ])
 })
 
 test('leaves non-resource targets alone and warns on an unknown example$ id', () => {
   const dir = tmpDir()
-  const page = '= Page\n\nplantuml::diagrams/local.puml[]\n\nplantuml::example$missing.puml[]\n\n[plantuml]\n----\nclass Plain\n----\n'
-  const { lines, warnings } = loadWith(page, { config: { export_dir: dir, playbookDir: '/' } })
+  const page = '= Page\n\nplantuml::diagrams/local.puml[]\n\nplantuml::order-model.puml[]\n\nplantuml::example$missing.puml[]\n\n[plantuml]\n----\nclass Plain\n----\n'
+  const { lines, warnings } = loadWith(page, { config: { exportDir: dir, playbookDir: '/' } })
   assert.ok(lines.includes('plantuml::diagrams/local.puml[]'))
+  // a plain path is a file system path for the HTML build too, even when an example of that name exists
+  assert.ok(lines.includes('plantuml::order-model.puml[]'))
   assert.ok(lines.includes('plantuml::example$missing.puml[]'))
   assert.ok(lines.includes('class Plain'))
+  assert.equal(fs.existsSync(exportedFamilyDir(dir)), false, 'nothing referenced, nothing exported')
   assert.equal(warnings.length, 1)
   assert.match(warnings[0][1], /example\$missing\.puml/)
-})
-
-test('ignores a stale mode option from the proof of concept with a warning', () => {
-  const { ctx, state, warnings } = createContext()
-  extension.register.call(ctx, { config: { mode: 'inline' }, playbook: { dir: process.cwd() } })
-  assert.equal(typeof state.replaced.loadAsciiDoc, 'function')
-  assert.equal(warnings.length, 1)
-  assert.match(warnings[0][0], /only exports/)
 })
