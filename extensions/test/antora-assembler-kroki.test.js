@@ -160,12 +160,12 @@ test('replaces the exported family so files gone from the catalog do not linger'
   assert.ok(fs.existsSync(path.join(exportedFamilyDir(dir), 'layout', 'colors.puml')))
 })
 
-test('export_dir defaults to build/assembler/resources under the playbook dir', () => {
+test('export_dir defaults to build/assembler-resources under the playbook dir', () => {
   const playbookDir = tmpDir()
   const { lines } = loadWith('= Page\n\nplantuml::example$order-model.puml[]\n', {
     config: { playbookDir },
   })
-  const expected = path.join(playbookDir, 'build', 'assembler', 'resources', 'demo', '1.0', 'ROOT', 'example', 'order-model.puml')
+  const expected = path.join(playbookDir, 'build', 'assembler-resources', 'demo', '1.0', 'ROOT', 'example', 'order-model.puml')
   assert.ok(lines.includes(`plantuml::${expected}[]`), lines.join('\n'))
 })
 

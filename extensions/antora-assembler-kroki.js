@@ -19,7 +19,7 @@
 // Assembler merges them: it writes the referenced resource family (the module's `examples/` tree, layout
 // intact) to <export_dir>/<component>/<version>/<module>/<family>/ and points the macro at the exported file:
 //
-//   plantuml::/antora/build/assembler/resources/demo/1.0/ROOT/example/order-model.puml[align=center]
+//   plantuml::/antora/build/assembler-resources/demo/1.0/ROOT/example/order-model.puml[align=center]
 //
 // The asciidoctor-kroki gem (2.0+, shipped in the vc-antora image) then resolves the diagram's relative
 // `!include`s from that file's directory itself. Nothing Antora-specific reaches Ruby. This mirrors what
@@ -31,7 +31,7 @@
 //     extensions:
 //       - '@antora/pdf-extension'
 //       - require: ./extensions/antora-assembler-kroki.js
-//         export_dir: build/assembler/resources   # relative to the playbook dir (default)
+//         export_dir: build/assembler-resources   # relative to the playbook dir (default)
 //         macros: [plantuml, c4plantuml]          # block macro names to handle (default)
 //
 // Constraints:
@@ -43,12 +43,15 @@
 //   the converter must run in unsafe mode (the asciidoctor-pdf CLI default) or `export_dir` must lie inside
 //   the converter's base directory (the Assembler's `build.cwd`, the playbook dir by default). In safe mode
 //   with an `export_dir` outside of it, Asciidoctor re-roots the path and every diagram fails to load.
+// - `export_dir` must not lie inside the Assembler's `build.dir`: the Assembler publishes its assembly files there
+//   with the playbook's `clean` flag, which wipes the exports before the converter runs. The default is a
+//   sibling of the Assembler's default `build/assembler/<profile>`.
 // - Not handled: the `kroki-plantuml-include` attribute (the Ruby gem prepends it itself).
 const fs = require('node:fs')
 const path = require('node:path')
 
 const DEFAULT_MACROS = ['plantuml', 'c4plantuml']
-const DEFAULT_EXPORT_DIR = 'build/assembler/resources'
+const DEFAULT_EXPORT_DIR = 'build/assembler-resources'
 const DELIMITER_CHARS = ['-', '.', '+']
 
 function escapeRegExp (s) {
