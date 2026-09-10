@@ -147,20 +147,14 @@ a path to it.
 
 `extensions/antora-assembler-kroki.js` (registered under `antora.extensions` in the playbook) closes
 that gap on the Node side, where the content catalog is. It wraps the Assembler's page loading and,
-only for Assembler exports, rewrites each page before it is merged. Two modes:
-
-`export` (default)::
-Writes the referenced resource family — the module's `examples/` tree with its layout intact — to
-`build/assembler/resources/<component>/<version>/<module>/<family>/` and points the macro at the
-exported file. `asciidoctor-kroki` 2.0+ then resolves the relative `!include`s from that file's
-directory itself; nothing Antora-specific reaches Ruby. This mirrors what the Assembler already does
-for `image$` targets and is the behavior we would like the Assembler to grow natively, at which point
-the extension retires.
-
-`inline`::
-For converters with `asciidoctor-kroki` < 2.0 (no include preprocessor): resolves and inlines every
-include here, turning the macro into a `[plantuml]` literal block holding the self-contained diagram.
-Reuses the JS extension's own `preprocess.js` and `antora-adapter.js`, so the result matches the site.
+only for Assembler exports, rewrites each page before it is merged: it writes the referenced resource
+family — the module's `examples/` tree with its layout intact — to
+`build/assembler/resources/<component>/<version>/<module>/<family>/` and points each macro at the
+exported file. `asciidoctor-kroki` 2.0+ then resolves the relative `!include`s from that file's directory
+itself; nothing Antora-specific reaches Ruby. This mirrors what the Assembler already does for `image$`
+targets and is the behavior we would like the Assembler to grow natively, at which point the extension
+retires. (An earlier proof of concept inlined the includes on the Node side instead; that mode was dropped
+once the gem's preprocessor made it unnecessary.)
 
 [source,yaml]
 ----
@@ -168,7 +162,6 @@ antora:
   extensions:
     - '@antora/pdf-extension'
     - require: ./extensions/antora-assembler-kroki.js
-      mode: export                              # or inline
       export_dir: build/assembler/resources     # default, relative to the playbook dir
       macros: [plantuml, c4plantuml]            # default
 ----
@@ -194,7 +187,7 @@ docs/
 ide-demo/
 └── plain-includes.adoc         IDE-only page (outside docs/): relative includes, no resource ids
 extensions/
-├── antora-assembler-kroki.js   Antora extension: export/inline example$ diagram sources for the PDF export
+├── antora-assembler-kroki.js   Antora extension: export example$ diagram sources for the PDF export
 └── test/                       node --test suite
 Dockerfile                      Antora + kroki JS + asciidoctor-pdf + kroki gem, for `npm run build:docker`
 antora-assembler-pdf.yml        Assembler config for @antora/pdf-extension
