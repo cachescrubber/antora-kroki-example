@@ -1,6 +1,6 @@
 @startuml
 ' Reuses the same shared layout — same relative include, different diagram.
-!include layout/colors.puml
+!include ./layout/colors.puml
 
 [*] --> Created
 Created --> Confirmed

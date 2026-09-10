@@ -6,12 +6,15 @@ for the HTML build, the PDF export and standalone PlantUML tooling alike:
 * *Pages* reference a diagram source by Antora resource id — `+plantuml::example$order-model.puml[]+`.
   The id lives in AsciiDoc, where every consumer has the content catalog.
 * *Diagram sources* (`.puml`) include each other with plain, relative PlantUML includes —
-  `!include layout/colors.puml`, `!includesub roles.puml!Core` — resolved against the including
+  `!include ./layout/colors.puml`, `!includesub ./roles.puml!Core` — resolved against the including
   file, exactly as the PlantUML CLI or the JetBrains PlantUML plugin do. No Antora syntax inside
   PlantUML, so every `.puml` stays a valid standalone diagram.
 * `[plantuml]` blocks written directly in a page are for self-contained snippets. A relative include
   inside a page block has no anchor directory in any consumer, so diagrams that include anything
   live in a `.puml` file and are referenced by macro.
+* Relative includes start with `./` or `../`. A bare same-directory path (`!includesub ./roles.puml!Core`)
+  is resolved against the `examples/` root by the site's Kroki extension, so it only works by
+  coincidence for files that live there; `./roles.puml` works everywhere.
 
 It accompanies https://github.com/asciidoctor/asciidoctor-intellij-plugin/issues/516[asciidoctor-intellij-plugin#516]
 and https://github.com/asciidoctor/asciidoctor-kroki/issues/519[asciidoctor-kroki#519]. Every diagram
@@ -21,7 +24,7 @@ below builds with the official `asciidoctor-kroki` JS extension (`npm run build`
 == Block macro + shared-layout include
 
 The `.puml` is referenced by an `example$` block-macro target, and itself does
-`!include layout/colors.puml` and `!include layout/legend.puml` (relative to its own directory).
+`!include ./layout/colors.puml` and `!include ./layout/legend.puml` (relative to its own directory).
 The includes are inlined before the diagram is sent to Kroki.
 
 plantuml::example$order-model.puml[align=center]
@@ -50,7 +53,7 @@ Page --> InlineBlock : "self-contained"
 == `!includesub` — a named sub-block
 
 `roles-simple.puml` extracts just the `Core` section of `roles.puml` (same directory) via
-`!includesub roles.puml!Core`; that section in turn includes the shared layout, so nested includes
+`!includesub ./roles.puml!Core`; that section in turn includes the shared layout, so nested includes
 are inlined recursively.
 
 plantuml::example$roles-simple.puml[align=center]

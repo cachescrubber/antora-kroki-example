@@ -7,11 +7,16 @@ sources:
 * *Pages* reference a diagram source by Antora resource id: `+plantuml::example$order-model.puml[]+`.
   The id stays in AsciiDoc, where every consumer has the content catalog.
 * *Diagram sources* (`.puml`) include each other with plain relative PlantUML includes:
-  `!include layout/colors.puml`, `!includesub roles.puml!Core`, resolved against the including file
+  `!include ./layout/colors.puml`, `!includesub ./roles.puml!Core`, resolved against the including file
   as the PlantUML CLI and the JetBrains PlantUML plugin do. No Antora syntax inside PlantUML, so every
   `.puml` is a valid standalone diagram.
 * `[plantuml]` blocks written directly in a page are for self-contained snippets. Diagrams with
   includes live in `.puml` files and are referenced by macro.
+* A relative include starts with `./` or `../` (`!includesub ./sibling.puml!Part`, not
+  `!includesub sibling.puml!Part`). asciidoctor-kroki 0.18 hands the target of an include inside an
+  Antora resource unchanged to its adapter, which resolves a bare path against the `examples/` root,
+  so a same-directory include without `./` silently disappears from the site's diagram; `../` forms
+  work because Antora resolves them relative to the context file.
 
 It accompanies https://github.com/asciidoctor/asciidoctor-intellij-plugin/issues/516[asciidoctor-intellij-plugin#516]
 (IDE preview of such diagrams) and https://github.com/asciidoctor/asciidoctor-kroki/issues/519[asciidoctor-kroki#519]

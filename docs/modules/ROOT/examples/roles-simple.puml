@@ -3,5 +3,5 @@
 ' !endsub section, which itself includes the shared layout — nested includes are inlined
 ' recursively.
 title Party — core only
-!includesub roles.puml!Core
+!includesub ./roles.puml!Core
 @enduml

@@ -3,7 +3,7 @@
 ' Other diagrams pull individual sections via  !includesub roles.puml!<Name>.
 
 !startsub Core
-!include layout/colors.puml
+!include ./layout/colors.puml
 abstract class Party
 class Individual extends Party
 class Organization extends Party
