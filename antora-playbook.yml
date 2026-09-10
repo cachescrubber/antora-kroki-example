@@ -5,6 +5,8 @@ site:
 antora:
   extensions:
     - '@antora/pdf-extension'
+    # Inline example$ resource ids in Kroki PlantUML diagrams for the PDF export (see README)
+    - ./extensions/antora-assembler-kroki.js
 
 content:
   sources:
