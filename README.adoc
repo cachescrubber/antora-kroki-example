@@ -53,11 +53,12 @@ The Kroki server has no filesystem, so whoever sends a diagram must inline its i
 | Plain relative includes; nothing Antora-specific in the `.puml` files.
 
 | IntelliJ AsciiDoc plugin preview (Kroki renderer)
-| not yet
-| PR asciidoctor-intellij-plugin#2054 resolves the macro target, but the plugin's Ruby copy of the
-  kroki extension predates the include preprocessor, so the relative `!include`s reach Kroki
-  unresolved. Planned: sync the plugin to the gem's 2.0 preprocessor, plus a placeholder mode for
-  diagrams that cannot be rendered.
+| yes, with the plugin branches below
+| Two stacked plugin branches (superseding asciidoctor-intellij-plugin#2054): the first updates the
+  plugin's embedded Kroki extension to the gem's 2.0 code, so relative `!include`s are inlined before
+  the diagram is sent; the second resolves `example$` macro targets inside an Antora module and shows
+  a placeholder with an open-in-editor link for anything that cannot render. See <<ide-preview>>.
+  The release plugin (0.45.x) renders the diagrams without the shared layout.
 |===
 
 == Build
@@ -94,18 +95,39 @@ Diagram rendering needs network access to `https://kroki.io` (or change `kroki-s
 `antora-playbook.yml` to a local Kroki server).
 ====
 
-== IDE demo for the plugin's Kroki 2.0 sync
+[[ide-preview]]
+== IntelliJ preview
 
-`ide-demo/plain-includes.adoc` lives outside `docs/`, so Antora ignores it. Its `plantuml::` macros use
-plain document-relative paths (`../docs/modules/ROOT/examples/order-model.puml`), no resource ids, so
-it demonstrates one thing in isolation: the IntelliJ AsciiDoc plugin built from the branch
-`feature/sync-kroki-extension-2.0` (embedded `asciidoctor-kroki` 2.0) inlines the relative
-`!include`/`!includesub` directives before sending the diagram to Kroki.
+The IntelliJ AsciiDoc plugin does not depend on the asciidoctor-kroki gem; it embeds a copy. Two local
+plugin branches bring the preview in line with the contract above; both supersede
+asciidoctor-intellij-plugin#2054:
 
-Open the page with the release plugin first: the diagrams render, but without the shared layout,
-because the Kroki server silently drops the includes it cannot read. Then switch to the sync build:
-same page, layout applied. Case 4 shows the inline-block variant via `kroki-plantuml-include-paths`
-set from `{docdir}`.
+[cols="1,2,2"]
+|===
+| Plugin branch | What it adds | What to open here
+
+| `feature/sync-kroki-extension-2.0` (build `0.45.7-kroki2.1`)
+| Embedded Kroki extension updated to asciidoctor-kroki 2.0: PlantUML `!include`/`!includesub` resolved
+  relative to the diagram file before sending, `kroki-plantuml-include-paths`, per-diagram error handling.
+  No Antora awareness.
+| `ide-demo/plain-includes.adoc` -- lives outside `docs/` (Antora ignores it) and references the `.puml`
+  sources by document-relative path, so it isolates the include handling. Case 4 shows an inline block
+  resolved via `kroki-plantuml-include-paths` set from `{docdir}`.
+
+| `feature/kroki-antora-target-and-placeholder` (build `0.45.7-antora-placeholder.1`, stacked on the first)
+| `plantuml::example$…[]` targets resolved inside an Antora module; a placeholder box with an
+  *Open <file>* link (opens the `.puml` in the editor, where the PlantUML integration plugin previews it)
+  whenever a diagram cannot render: unresolvable target, missing include file, or Kroki server error.
+  The document attribute `kroki-preview-placeholder` shows placeholders for all Kroki diagrams without
+  contacting the server.
+| `docs/modules/ROOT/pages/index.adoc` -- the Antora page itself. All four macro diagrams render with
+  the shared layout. Rename `examples/layout/colors.puml` and only the affected diagrams turn into
+  placeholders naming the missing include.
+|===
+
+Comparison baseline: open either page with the release plugin (0.45.x). The diagrams render, but without
+the shared layout, because the plugin sends the raw `.puml` text and the Kroki server silently drops the
+includes it cannot read (black borders, white fill instead of blue borders, light fill and the legend box).
 
 [[pdf-export]]
 == PDF export and `example$` ids

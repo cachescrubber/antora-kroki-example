@@ -1,6 +1,7 @@
 = IDE demo: PlantUML includes without Antora ids
 // Open this file in IntelliJ with the AsciiDoc plugin built from the branch
-// feature/sync-kroki-extension-2.0 (embedded asciidoctor-kroki 2.0) and the Kroki renderer enabled.
+// feature/sync-kroki-extension-2.0 (embedded asciidoctor-kroki 2.0) or the stacked
+// feature/kroki-antora-target-and-placeholder branch, with the Kroki renderer enabled.
 // It lives outside docs/ on purpose: Antora never sees it, and its macro targets are plain paths
 // relative to this document, not resource ids, so it needs nothing from PR #2054.
 :kroki-plantuml-include-paths: {docdir}/../docs/modules/ROOT/examples
