@@ -27,6 +27,9 @@ It accompanies https://github.com/asciidoctor/asciidoctor-intellij-plugin/issues
 . *`[plantuml]` delimited block* — a self-contained snippet without includes (the block rule).
 . *`!includesub`* with a named sub-block — `!includesub roles.puml!Core`; the section itself includes
   the shared layout, so nested includes are resolved recursively.
+. *Nested directories* — `nested/deep/order-nested.puml` reaches the shared layout and the roles library
+  with `!include ../../layout/colors.puml` and `!includesub ../../roles.puml!Core`, the layout of a real
+  diagram tree.
 . *Pass-through* — `!include <C4/C4_Context>` cannot be resolved locally, so it is left untouched and
   resolved by the Kroki server. Remote `http(s)` includes are passed through the same way.
 
@@ -120,7 +123,7 @@ asciidoctor-intellij-plugin#2054:
   whenever a diagram cannot render: unresolvable target, missing include file, or Kroki server error.
   The document attribute `kroki-preview-placeholder` shows placeholders for all Kroki diagrams without
   contacting the server.
-| `docs/modules/ROOT/pages/index.adoc` -- the Antora page itself. All four macro diagrams render with
+| `docs/modules/ROOT/pages/index.adoc` -- the Antora page itself. All five macro diagrams render with
   the shared layout. Rename `examples/layout/colors.puml` and only the affected diagrams turn into
   placeholders naming the missing include.
 |===
@@ -181,6 +184,7 @@ docs/
         ├── order-lifecycle.puml
         ├── roles.puml          !startsub Core/Roles library
         ├── roles-simple.puml   !includesub roles.puml!Core
+        ├── nested/deep/order-nested.puml   ../../ includes from a nested directory
         └── context.puml        !include <C4/C4_Context> pass-through
 ide-demo/
 └── plain-includes.adoc         IDE-only page (outside docs/): relative includes, no resource ids

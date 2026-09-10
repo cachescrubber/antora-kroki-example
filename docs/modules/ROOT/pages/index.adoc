@@ -55,6 +55,14 @@ are inlined recursively.
 
 plantuml::example$roles-simple.puml[align=center]
 
+== Nested directories: `../../` includes
+
+Real diagram trees are nested (per API family, per resource). `nested/deep/order-nested.puml` reaches
+the shared layout and the roles library with `!include ../../layout/colors.puml` and
+`!includesub ../../roles.puml!Core`.
+
+plantuml::example$nested/deep/order-nested.puml[align=center]
+
 == Pass-through: `<stdlib>` includes stay untouched
 
 A `!include <C4/C4_Context>` cannot be resolved locally, so it is left as-is and resolved by the
