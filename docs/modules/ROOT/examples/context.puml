@@ -1,8 +1,7 @@
 @startuml
-' Pass-through case: a <stdlib> include is NOT an Antora resource id, so the feature
-' must leave it untouched and let the Kroki server resolve it (Kroki bundles the
-' PlantUML stdlib, incl. C4-PlantUML). Remote http(s) includes are passed through the
-' same way. Only example$… ids are inlined.
+' Pass-through case: a <stdlib> include cannot be resolved locally, so every preprocessor
+' leaves it untouched and lets the Kroki server resolve it (Kroki bundles the PlantUML
+' stdlib, incl. C4-PlantUML). Remote http(s) includes are passed through the same way.
 !include <C4/C4_Context>
 
 Person(user, "User")

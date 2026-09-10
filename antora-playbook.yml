@@ -5,6 +5,10 @@ site:
 antora:
   extensions:
     - '@antora/pdf-extension'
+    # PDF export: export the example$ diagram sources to disk and point the plantuml:: macros
+    # at them, so asciidoctor-pdf + the asciidoctor-kroki gem resolve the relative includes (see README)
+    - require: ./extensions/antora-assembler-kroki.js
+      mode: export
 
 content:
   sources:

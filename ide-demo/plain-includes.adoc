@@ -1,0 +1,55 @@
+= IDE demo: PlantUML includes without Antora ids
+// Open this file in IntelliJ with the AsciiDoc plugin built from the branch
+// feature/sync-kroki-extension-2.0 (embedded asciidoctor-kroki 2.0) or the stacked
+// feature/kroki-antora-target-and-placeholder branch, with the Kroki renderer enabled.
+// It lives outside docs/ on purpose: Antora never sees it, and its macro targets are plain paths
+// relative to this document, not resource ids, so it needs nothing from PR #2054.
+:kroki-plantuml-include-paths: {docdir}/../docs/modules/ROOT/examples
+
+What the 2.0 sync changes in the preview, and how to see it:
+
+* *Release plugin (0.45.x):* every diagram below renders, but *without* the shared layout. The
+  plugin sends the raw `.puml` text; PlantUML on the Kroki server cannot read `layout/colors.puml`,
+  silently drops the line, and draws the rest. Compare the class boxes: black borders, white fill.
+* *Sync branch:* the plugin inlines the includes before sending. Blue borders, light fill, legend box.
+
+== 1. Block macro, document-relative target, relative includes inside the file
+
+`order-model.puml` does `!include layout/colors.puml` and `!include layout/legend.puml`,
+resolved against the `.puml` file's own directory.
+
+plantuml::../docs/modules/ROOT/examples/order-model.puml[align=center]
+
+== 2. `!includesub`, nested include
+
+`roles-simple.puml` pulls the `Core` section of `roles.puml`, which in turn includes the layout.
+
+plantuml::../docs/modules/ROOT/examples/roles-simple.puml[align=center]
+
+== 3. `<stdlib>` pass-through
+
+Not resolvable locally; left for the Kroki server. Renders identically on both plugin versions.
+
+plantuml::../docs/modules/ROOT/examples/context.puml[align=center]
+
+== 4. Inline block with `kroki-plantuml-include-paths`
+
+An inline `[plantuml]` block has no file location, so a relative include has nothing to resolve
+against. The header of this page sets `kroki-plantuml-include-paths` to the examples directory
+(via `{docdir}`), so `!include layout/colors.puml` resolves from there.
+
+[plantuml,align=center]
+----
+@startuml
+!include layout/colors.puml
+class InlineBlock
+class SharedLayout
+InlineBlock --> SharedLayout : "via kroki-plantuml-include-paths"
+@enduml
+----
+
+== 5. Failure stays local
+
+With the release plugin a broken diagram could take the whole page down. With 2.0 a server failure
+degrades to a `kroki-error` block for that diagram only. (Point the plugin's Kroki URL at a
+non-existent server to see it; the rest of this page still renders.)

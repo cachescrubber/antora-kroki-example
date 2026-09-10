@@ -1,0 +1,9 @@
+@startuml
+' Real-world layout: diagram sources live in nested directories (per API family, per resource), so
+' the shared layout is two levels up. Relative includes with ../../ must resolve everywhere.
+!include ../../layout/colors.puml
+!includesub ../../roles.puml!Core
+
+class NestedOrder
+NestedOrder --> Party
+@enduml

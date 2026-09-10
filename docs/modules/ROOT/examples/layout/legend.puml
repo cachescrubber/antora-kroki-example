@@ -1,8 +1,8 @@
 @startuml
-' Shared legend, included via  !include example$layout/legend.puml
+' Shared legend, included via  !include layout/legend.puml
 legend right
-  | Shared layout | example$layout |
-  | colors.puml   | skin + colors  |
-  | legend.puml   | this box       |
+  | Shared layout | layout/       |
+  | colors.puml   | skin + colors |
+  | legend.puml   | this box      |
 endlegend
 @enduml
