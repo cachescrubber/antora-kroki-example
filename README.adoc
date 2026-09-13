@@ -61,12 +61,12 @@ The Kroki server has no filesystem, so whoever sends a diagram must inline its i
 | Plain relative includes; nothing Antora-specific in the `.puml` files.
 
 | IntelliJ AsciiDoc plugin preview (Kroki renderer)
-| yes, with the plugin branches below
-| Two stacked plugin branches (superseding asciidoctor-intellij-plugin#2054): the first updates the
-  plugin's embedded Kroki extension to the gem's 2.0 code, so relative `!include`s are inlined before
+| yes, plugin 0.45.7 and later
+| Two upstream changes (asciidoctor-intellij-plugin#2111 and #2112, superseding #2054): the first updates
+  the plugin's embedded Kroki extension to the gem's 2.0 code, so relative `!include`s are inlined before
   the diagram is sent; the second resolves `example$` macro targets inside an Antora module and shows
   a placeholder with an open-in-editor link for anything that cannot render. See <<ide-preview>>.
-  The release plugin (0.45.x) renders the diagrams without the shared layout.
+  Older plugin versions (0.45.6 and before) render the diagrams without the shared layout.
 |===
 
 == Build
@@ -110,15 +110,15 @@ Diagram rendering needs network access to `https://kroki.io` (or change `kroki-s
 [[ide-preview]]
 == IntelliJ preview
 
-The IntelliJ AsciiDoc plugin does not depend on the asciidoctor-kroki gem; it embeds a copy. Two local
-plugin branches bring the preview in line with the contract above; both supersede
-asciidoctor-intellij-plugin#2054:
+The IntelliJ AsciiDoc plugin does not depend on the asciidoctor-kroki gem; it embeds a copy. Two upstream
+changes, both in plugin 0.45.7 and later, bring the preview in line with the contract above; together they
+supersede asciidoctor-intellij-plugin#2054:
 
 [cols="1,2,2"]
 |===
-| Plugin branch | What it adds | What to open here
+| Change | What it adds | What to open here
 
-| `feature/sync-kroki-extension-2.0` (build `0.45.7-kroki2.1`)
+| https://github.com/asciidoctor/asciidoctor-intellij-plugin/pull/2111[#2111]
 | Embedded Kroki extension updated to asciidoctor-kroki 2.0: PlantUML `!include`/`!includesub` resolved
   relative to the diagram file before sending, `kroki-plantuml-include-paths`, per-diagram error handling.
   No Antora awareness.
@@ -126,7 +126,7 @@ asciidoctor-intellij-plugin#2054:
   sources by document-relative path, so it isolates the include handling. Case 4 shows an inline block
   resolved via `kroki-plantuml-include-paths` set from `{docdir}`.
 
-| `feature/kroki-antora-target-and-placeholder` (build `0.45.7-antora-placeholder.1`, stacked on the first)
+| https://github.com/asciidoctor/asciidoctor-intellij-plugin/pull/2112[#2112]
 | `plantuml::example$…[]` targets resolved inside an Antora module; a placeholder box with an
   *Open <file>* link (opens the `.puml` in the editor, where the PlantUML integration plugin previews it)
   whenever a diagram cannot render: unresolvable target, missing include file, or Kroki server error.
@@ -137,7 +137,7 @@ asciidoctor-intellij-plugin#2054:
   placeholders naming the missing include.
 |===
 
-Comparison baseline: open either page with the release plugin (0.45.x). The diagrams render, but without
+Comparison baseline: open either page with a plugin before 0.45.7. The diagrams render, but without
 the shared layout, because the plugin sends the raw `.puml` text and the Kroki server silently drops the
 includes it cannot read (black borders, white fill instead of blue borders, light fill and the legend box).
 
