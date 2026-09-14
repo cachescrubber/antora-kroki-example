@@ -61,12 +61,12 @@ The Kroki server has no filesystem, so whoever sends a diagram must inline its i
 | Plain relative includes; nothing Antora-specific in the `.puml` files.
 
 | IntelliJ AsciiDoc plugin preview (Kroki renderer)
-| yes, plugin 0.45.7 and later
+| yes, with the next plugin release after 0.45.6 (merged upstream 2026-09-13)
 | Two upstream changes (asciidoctor-intellij-plugin#2111 and #2112, superseding #2054): the first updates
   the plugin's embedded Kroki extension to the gem's 2.0 code, so relative `!include`s are inlined before
   the diagram is sent; the second resolves `example$` macro targets inside an Antora module and shows
   a placeholder with an open-in-editor link for anything that cannot render. See <<ide-preview>>.
-  Older plugin versions (0.45.6 and before) render the diagrams without the shared layout.
+  Plugin 0.45.6 and older render the diagrams without the shared layout.
 |===
 
 == Build
@@ -111,7 +111,8 @@ Diagram rendering needs network access to `https://kroki.io` (or change `kroki-s
 == IntelliJ preview
 
 The IntelliJ AsciiDoc plugin does not depend on the asciidoctor-kroki gem; it embeds a copy. Two upstream
-changes, both in plugin 0.45.7 and later, bring the preview in line with the contract above; together they
+changes, merged upstream on 2026-09-13 and part of the next plugin release after 0.45.6, bring the preview in
+line with the contract above; together they
 supersede asciidoctor-intellij-plugin#2054:
 
 [cols="1,2,2"]
@@ -137,7 +138,7 @@ supersede asciidoctor-intellij-plugin#2054:
   placeholders naming the missing include.
 |===
 
-Comparison baseline: open either page with a plugin before 0.45.7. The diagrams render, but without
+Comparison baseline: open either page with plugin 0.45.6 or older. The diagrams render, but without
 the shared layout, because the plugin sends the raw `.puml` text and the Kroki server silently drops the
 includes it cannot read (black borders, white fill instead of blue borders, light fill and the legend box).
 
