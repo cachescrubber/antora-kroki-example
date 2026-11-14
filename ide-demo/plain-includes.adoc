@@ -1,6 +1,5 @@
 = IDE demo: PlantUML includes without Antora ids
-// Open this file in IntelliJ with the AsciiDoc plugin from the next release after 0.45.6 (embedded
-// asciidoctor-kroki 2.0, merged upstream 2026-09-13 as
+// Open this file in IntelliJ with the AsciiDoc plugin 0.45.7 or later (embedded asciidoctor-kroki 2.0,
 // asciidoctor-intellij-plugin#2111) and the Kroki renderer enabled.
 // It lives outside docs/ on purpose: Antora never sees it, and its macro targets are plain paths
 // relative to this document, not resource ids, so it needs nothing from #2112.
@@ -11,7 +10,7 @@ What the 2.0 sync changes in the preview, and how to see it:
 * *Plugin 0.45.6 and older:* every diagram below renders, but *without* the shared layout. The
   plugin sends the raw `.puml` text; PlantUML on the Kroki server cannot read `layout/colors.puml`,
   silently drops the line, and draws the rest. Compare the class boxes: black borders, white fill.
-* *Next release after 0.45.6:* the plugin inlines the includes before sending. Blue borders, light fill, legend box.
+* *Plugin 0.45.7 and later:* the plugin inlines the includes before sending. Blue borders, light fill, legend box.
 
 == 1. Block macro, document-relative target, relative includes inside the file
 
