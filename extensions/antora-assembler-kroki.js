@@ -36,9 +36,8 @@
 //
 // Constraints:
 // - The converter needs the asciidoctor-kroki gem 2.0 or later (its include preprocessor resolves the
-//   exported files' relative includes). Only prereleases exist so far: `gem install asciidoctor-kroki --pre`
-//   (the Dockerfile pins one). Gem 1.x sends the `!include` lines to the Kroki server unresolved, which drops
-//   them silently.
+//   exported files' relative includes): `gem install asciidoctor-kroki` (the Dockerfile pins 2.0.0). Gem 1.x
+//   sends the `!include` lines to the Kroki server unresolved, which drops them silently.
 // - The macro target is an absolute path. The gem resolves it with Asciidoctor's `normalize_system_path`, so
 //   the converter must run in unsafe mode (the asciidoctor-pdf CLI default) or `export_dir` must lie inside
 //   the converter's base directory (the Assembler's `build.cwd`, the playbook dir by default). In safe mode
